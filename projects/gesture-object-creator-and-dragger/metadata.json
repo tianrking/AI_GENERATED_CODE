@@ -1,0 +1,8 @@
+{
+  "name": "Gesture Object Creator and Dragger",
+  "description": "A web application that allows users to create draggable objects using an extended finger pose and drag them using a two-finger pinch gesture. Detected via device camera and MediaPipe Hands.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "prompt": ""
+}
