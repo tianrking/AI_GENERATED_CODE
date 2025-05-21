@@ -1,0 +1,5 @@
+{
+  "name": "智能空间交互中心 (Smart Space Hub)",
+  "description": "一个美观、现代的智能家居控制面板，通过 MQTT (模拟) 与您的智能设备进行交互。体验流畅的动画和现代化的设计，轻松管理您的智能家居环境。 (A beautiful and modern smart home control panel that interacts with your smart devices via MQTT (simulated). Experience smooth animations and a modern design to effortlessly manage your smart home environment.)",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Interactive Map Toy",
+  "description": "A fun toy application to explore different locations on a conceptual map and get interesting facts using Gemini API. Control zoom, pan through predefined locations, search for new places, and learn more about them.",
+  "requestFramePermissions": []
+}

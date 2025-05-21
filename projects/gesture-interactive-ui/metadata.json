@@ -1,0 +1,8 @@
+{
+  "name": "Gesture Interactive UI",
+  "description": "An experimental web application that uses your device's camera to detect hand gestures and interact with UI elements. Try pointing at the button!",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "prompt": ""
+}

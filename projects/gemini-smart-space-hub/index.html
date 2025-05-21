@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-T" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智能空间交互中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'sky': {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+              },
+              'brand-primary': 'var(--color-brand-primary)',
+              'brand-secondary': 'var(--color-brand-secondary)',
+              'brand-accent': 'var(--color-brand-accent)',
+              'brand-background': 'var(--color-brand-background)',
+              'brand-surface': 'var(--color-brand-surface)',
+              'brand-text-primary': 'var(--color-brand-text-primary)',
+              'brand-text-secondary': 'var(--color-brand-text-secondary)',
+            },
+            animation: {
+              'slide-in-right': 'slideInRight 0.5s ease-out forwards',
+              'slide-out-right': 'slideOutRight 0.5s ease-in forwards',
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'pulse-fast': 'pulseFast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              slideInRight: {
+                '0%': { transform: 'translateX(100%)', opacity: '0' },
+                '100%': { transform: 'translateX(0)', opacity: '1' },
+              },
+              slideOutRight: {
+                '0%': { transform: 'translateX(0)', opacity: '1' },
+                '100%': { transform: 'translateX(100%)', opacity: '0' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              pulseFast: {
+                '0%, 100%': { opacity: '1' },
+                '50%': { opacity: '.7' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif; /* A modern sans-serif font */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+      /* Custom scrollbar for a more modern look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0ea5e9; /* sky-500 */
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #0284c7; /* sky-600 */
+      }
+      /* Dynamic theme variables */
+      :root {
+        --color-brand-primary: #0ea5e9; /* sky-500 */
+        --color-brand-secondary: #0369a1; /* sky-700 */
+        --color-brand-accent: #fb923c; /* orange-400 */
+        --color-brand-background: #f0f9ff; /* sky-50 */
+        --color-brand-surface: #ffffff;
+        --color-brand-text-primary: #1f2937; /* gray-800 */
+        --color-brand-text-secondary: #4b5563; /* gray-600 */
+      }
+      [data-theme="dark"] {
+        --color-brand-primary: #38bdf8; /* sky-400 */
+        --color-brand-secondary: #0ea5e9; /* sky-500 */
+        --color-brand-accent: #fb923c; /* orange-400 */
+        --color-brand-background: #0c131d; /* Custom dark */
+        --color-brand-surface: #1e293b; /* slate-800 */
+        --color-brand-text-primary: #f8fafc; /* slate-50 */
+        --color-brand-text-secondary: #cbd5e1; /* slate-300 */
+      }
+      body {
+        background-color: var(--color-brand-background);
+        color: var(--color-brand-text-primary);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!-- Ensure this path is correct if you move index.tsx -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
+<link rel="stylesheet" href="index.css">
+<script src="index.tsx" type="module"></script>
