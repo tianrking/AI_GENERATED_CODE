@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息图：边缘之战 - 物联网与AI芯片市场格局</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F0F4F8;
+            color: #232323;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+        .flow-line {
+            position: relative;
+            background-color: #007EA7;
+        }
+        .flow-line::after {
+            content: '▼';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #007EA7;
+            font-size: 1.2rem;
+        }
+        .arch-card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 5px solid;
+        }
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 100%;
+            background-color: #007EA7;
+            opacity: 0.3;
+        }
+        .camp-card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .camp-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .camp-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 1rem auto;
+        }
+        .category-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .guidance-card {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#003459] mb-2">边缘之战</h1>
+            <p class="text-lg md:text-xl text-[#007EA7]">物联网与AI芯片市场的整合、战略与未来</p>
+        </header>
+
+        <section id="market-share" class="mb-16">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-center text-[#003459] mb-8">市场领导者格局</h2>
+                <p class="text-center text-gray-600 mb-12 max-w-3xl mx-auto">在深入探讨各家厂商的战略布局之前，首先需要明确其在核心市场的地位。MCU（微控制器）、蓝牙BLE芯片和射频前端是构成现代物联网设备的三个基石，其市场份额的分布直接反映了各厂商的行业影响力。</p>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    <div>
+                        <h3 class="text-xl font-bold text-center text-[#003459] mb-4">MCU市场领导者格局 (2024年份额)</h3>
+                        <p class="text-center text-sm text-gray-500 mb-6">MCU是所有智能设备的“大脑”。2024年，市场呈现出高度集中的态势，欧洲厂商表现尤为强劲，以英飞凌为首，与NXP、ST共同占据了市场的核心位置。</p>
+                        <div class="chart-container">
+                            <canvas id="mcuMarketShareChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-center text-[#003459] mb-4">蓝牙BLE芯片主要厂商 (2024年份额估计)</h3>
+                        <p class="text-center text-sm text-gray-500 mb-6">蓝牙BLE是低功耗物联网的“通用语言”。该领域由Nordic半导体以绝对优势领导，其后是众多在连接技术和特定应用领域各具优势的厂商。</p>
+                        <div class="chart-container">
+                            <canvas id="bleMarketShareChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-center text-[#003459] mb-4">射频前端市场主要厂商 (2024年份额)</h3>
+                        <p class="text-center text-sm text-gray-500 mb-6">射频芯片是无线通信的“咽喉”，其性能决定了设备的连接能力。该领域由几家美国和日本巨头主导，他们提供从滤波器到功率放大器的完整前端模组。</p>
+                        <div class="chart-container">
+                            <canvas id="rfMarketShareChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline" class="mb-16">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h2 class="text-2xl font-bold text-center text-[#003459] mb-2">整合浪潮：十年“军备竞赛”</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">物联网与边缘AI市场正经历一场深刻的变革。曾经以硬件和软件厂商合作为主的模式，正迅速被大型企业主导的垂直整合所取代。回顾过去十年，这场“军备竞赛”愈演愈烈，芯片巨头们纷纷通过收购来构建完整的生态系统并控制核心技术。</p>
+                <div class="relative timeline-container wrap overflow-hidden p-2 md:p-10 h-full">
+                    
+                    <div class="mb-8 flex justify-between items-center w-full right-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#00A8E8] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto font-semibold text-sm text-white">1</h1></div><div class="order-1 bg-[#00A8E8] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2016年9月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">英特尔 (Intel) 收购 Movidius，获得其领先的视觉处理单元(VPU)技术，为早期边缘AI视觉应用奠定基础。</p></div></div>
+                    <div class="mb-8 flex justify-between flex-row-reverse items-center w-full left-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#007EA7] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto text-white font-semibold text-sm">2</h1></div><div class="order-1 bg-[#007EA7] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2020年4月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">英飞凌 (Infineon) 完成对赛普拉斯(Cypress)的收购，整合了双方在汽车、工业和物联网MCU及连接市场的强大实力。</p></div></div>
+                    <div class="mb-8 flex justify-between items-center w-full right-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#003459] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto font-semibold text-sm text-white">3</h1></div><div class="order-1 bg-[#003459] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2021年8月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">瑞萨电子 (Renesas) 完成对Dialog的收购，极大地增强了其在低功耗连接和混合信号领域的解决方案能力。</p></div></div>
+                    <div class="mb-8 flex justify-between flex-row-reverse items-center w-full left-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#00A8E8] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto text-white font-semibold text-sm">4</h1></div><div class="order-1 bg-[#00A8E8] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2022年6月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">瑞萨电子 (Renesas) 收购 Reality AI，旨在将专业的非视觉传感器信号处理技术深度整合到其产品线中。</p></div></div>
+                    <div class="mb-8 flex justify-between items-center w-full right-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#007EA7] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto font-semibold text-sm text-white">5</h1></div><div class="order-1 bg-[#007EA7] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2024年4月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">Microchip 收购 Neuronix AI Labs，专注于增强其FPGA产品在边缘AI应用中的性能和能效。</p></div></div>
+                    <div class="mb-8 flex justify-between flex-row-reverse items-center w-full left-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#003459] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto text-white font-semibold text-sm">6</h1></div><div class="order-1 bg-[#003459] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2025年3月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">高通 (Qualcomm) 宣布收购Edge Impulse的意向，旨在将领先的MLOps平台与其硬件深度绑定，主导高端市场。</p></div></div>
+                    <div class="mb-8 flex justify-between items-center w-full right-timeline"><div class="order-1 w-5/12"></div><div class="z-20 flex items-center order-1 bg-[#00A8E8] shadow-xl w-8 h-8 rounded-full"><h1 class="mx-auto font-semibold text-sm text-white">7</h1></div><div class="order-1 bg-[#00A8E8] rounded-lg shadow-xl w-5/12 px-6 py-4"><h3 class="font-bold text-white text-lg">2025年6月</h3><p class="text-sm leading-snug tracking-wide text-white text-opacity-80">Nordic 半导体收购 Neuton.ai，标志着其打造从硬件到软件闭环生态系统的决心，直接应对竞争压力。</p></div></div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="camps" class="mb-16">
+             <h2 class="text-3xl font-bold text-center text-[#003459] mb-2">八大阵营：群雄逐鹿</h2>
+             <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">在当前的竞争格局中，已形成八个各具特色的主要阵营。每个阵营都围绕一个核心芯片厂商，通过不同的战略手段、技术路线和市场定位，争夺边缘智能物联网的未来。</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">N</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">Nordic 阵营</h3><p class="text-gray-700 text-sm mb-3">以蓝牙LE为基石，通过收购Neuton.ai和Atlazo，构建从硬件(Arm+RISC-V)到软件的闭环AIoT生态。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">AI战略的成功高度依赖对近期收购的整合效果；在Wi-Fi等非蓝牙核心领域仍是追赶者。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：垂直整合</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">Q</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">高通阵营</h3><p class="text-gray-700 text-sm mb-3">凭借强大的连接技术和高性能处理器，意图通过收购Edge Impulse等软件平台，主导高端边缘AI市场。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">方案成本与功耗偏高，不适用于极度资源受限的节点；移动基因使其物联网方案有时过于复杂。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：垂直整合</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">S</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">ST 阵营</h3><p class="text-gray-700 text-sm mb-3">依托庞大的STM32产品线和免费强大的STM32Cube.AI工具链，构建了规模巨大的开发者生态系统。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">生态庞大但产品线繁杂，有时让开发者选择困难；在最高性能领域面临激烈竞争。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：生态系统驱动</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">X</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">NXP 阵营</h3><p class="text-gray-700 text-sm mb-3">深耕汽车和工业市场，提供包含NPU的i.MX系列处理器和开放的eIQ软件环境，强调安全与可靠性。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">强于汽车/工业，但在消费物联网领域可能缺乏灵活性；产品组合庞大带来复杂性。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：平台化与开放性</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">SL</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">Silicon Labs 阵营</h3><p class="text-gray-700 text-sm mb-3">专注于物联网无线SoC，提供集成AI/ML硬件加速器的芯片，并与SensiML等第三方软件商紧密合作。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">高度依赖合作伙伴提供AI软件方案；与大而全的供应商相比，产品线聚焦相对较窄。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：伙伴关系驱动</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">E</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">乐鑫阵营</h3><p class="text-gray-700 text-sm mb-3">以极具竞争力的Wi-Fi/蓝牙芯片和全栈开源理念（大量采用RISC-V）赢得全球开发者和创客的青睐。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">强于连接，但MCU通用计算能力和外设丰富度弱于传统MCU厂商；品牌更偏向消费/创客市场。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：全栈开源与性价比</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">R</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">瑞萨阵营</h3><p class="text-gray-700 text-sm mb-3">全球领先的MCU/MPU供应商，通过收购Reality AI等专业公司，将独特AI技术深度整合到自家产品线。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">整合众多收购案带来挑战，可能导致工具链碎片化；市场反应速度被认为不如欧美对手。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：通过收购实现整合</p></div></div>
+                <div class="camp-card"><div><div class="camp-icon bg-[#003459]">M</div><h3 class="font-bold text-xl text-[#003459] text-center mb-2">Microchip 阵营</h3><p class="text-gray-700 text-sm mb-3">拥有极其广泛的MCU和模拟产品线，提供自有ML工具链，同时通过收购Neuronix AI增强FPGA能力。</p><div class="bg-red-50 border-l-4 border-red-400 p-2"><h5 class="font-bold text-red-800 text-sm">潜在挑战</h5><p class="text-xs text-red-700">产品组合“大而全”既是优点也是选择的负担；自有AI工具链相较于专注者仍显稚嫩。</p></div></div><div class="mt-4 pt-4 border-t border-gray-200 text-center"><p class="font-bold text-[#007EA7] text-sm">核心战略：混合模式</p></div></div>
+            </div>
+        </section>
+
+        <section id="foundry" class="mb-16">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-center text-[#003459] mb-8">全球供应链的基石：制造模式与晶圆代工格局</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">芯片的最终性能与产能，不仅取决于设计，更深度依赖其制造工艺与供应链策略。各厂商在此采取了截然不同的路径，形成了以自主生产（IDM）和专业代工（Fabless）为主的两大模式，其中，台积电等顶级代工厂在全球供应链中扮演着无可替代的核心角色。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="category-card"><h3 class="font-semibold text-xl text-center text-[#007EA7] mb-3">IDM / Fab-Lite 阵营</h3><p class="text-center text-sm text-gray-500 mb-4">拥有部分或全部制造能力，对生产和供应链有更强控制力。</p><ul class="space-y-2 text-center"><li class="inline-block bg-cyan-100 text-cyan-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">STMicroelectronics</li><li class="inline-block bg-cyan-100 text-cyan-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">NXP</li><li class="inline-block bg-cyan-100 text-cyan-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Renesas</li><li class="inline-block bg-cyan-100 text-cyan-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Microchip</li></ul></div>
+                    <div class="category-card"><h3 class="font-semibold text-xl text-center text-[#00A8E8] mb-3">Fabless 阵营</h3><p class="text-center text-sm text-gray-500 mb-4">专注于芯片设计，将生产完全外包给专业代工厂。</p><ul class="space-y-2 text-center"><li class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Nordic</li><li class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Qualcomm</li><li class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Silicon Labs</li><li class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">Espressif</li></ul></div>
+                </div>
+                <div class="mt-8 border-t pt-8">
+                     <h3 class="text-xl font-bold text-center text-[#003459] mb-4">关键晶圆代工合作伙伴</h3>
+                     <p class="text-center text-gray-600 mb-6 max-w-2xl mx-auto">对于Fabless厂商，以及需要先进工艺的IDM厂商而言，选择顶级代工厂是确保其产品竞争力的关键。台积电（TSMC）是其中最核心的合作伙伴。</p>
+                     <div class="flex justify-center flex-wrap gap-4"><div class="text-center"><h4 class="font-bold text-lg">台积电 (TSMC)</h4><p class="text-sm text-gray-500">Nordic, Qualcomm, Espressif, Renesas, NXP</p></div><div class="text-center"><h4 class="font-bold text-lg">三星 (Samsung)</h4><p class="text-sm text-gray-500">Qualcomm</p></div><div class="text-center"><h4 class="font-bold text-lg">GlobalFoundries</h4><p class="text-sm text-gray-500">ST (合作)</p></div></div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="riscv" class="mb-16">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-center text-[#003459] mb-2">架构革新：RISC-V 的兴起</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">为了追求极致的能效与灵活性，部分厂商开始拥抱开放标准的RISC-V架构。这并非要取代成熟的Arm生态，而是一种“为正确的工作选择正确工具”的异构计算思想，旨在通过专用协处理器分担主CPU的负载，实现系统整体性能的最优化。</p>
+                
+                <div class="p-4 mb-12"><h3 class="text-xl font-bold text-[#003459] mb-6 text-center">案例分析：Nordic nRF54系列异构架构</h3><div class="flex flex-col items-center"><div class="bg-[#003459] text-white p-4 rounded-lg shadow-md w-full md:w-1/2 text-center"><p class="font-bold">主应用处理器</p><p>Arm® Cortex®-M33</p><p class="text-sm opacity-80">处理复杂的应用逻辑</p></div><div class="w-1 h-8 my-2 flow-line"></div><div class="w-full text-center mb-4"><p class="text-sm text-gray-500">卸载任务至</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-3/4"><div class="bg-[#007EA7] text-white p-4 rounded-lg shadow-md text-center"><p class="font-bold">协处理器 (PPR)</p><p>RISC-V "Viper"</p><p class="text-sm opacity-80">处理低功耗外设</p></div><div class="bg-[#00A8E8] text-white p-4 rounded-lg shadow-md text-center"><p class="font-bold">协处理器 (FLPR)</p><p>RISC-V "Viper"</p><p class="text-sm opacity-80">实现软件定义的高速外设</p></div></div></div></div>
+                <div class="border-t border-gray-200 pt-10"><h3 class="text-xl font-bold text-[#003459] mb-6 text-center">各家厂商架构选择对比</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="arch-card" style="border-color: #003459;"><h4 class="font-bold text-lg mb-2 text-[#003459]">Nordic</h4><p class="text-gray-700"><strong>异构计算先驱</strong></p><p class="text-sm text-gray-500 mt-1">Arm为主，RISC-V为辅，实现功耗与性能的最优化。</p></div><div class="arch-card" style="border-color: #007EA7;"><h4 class="font-bold text-lg mb-2 text-[#007EA7]">乐鑫</h4><p class="text-gray-700"><strong>RISC-V急先锋</strong></p><p class="text-sm text-gray-500 mt-1">新产品线全面拥抱RISC-V，引领开源与性价比潮流。</p></div><div class="arch-card" style="border-color: #00A8E8;"><h4 class="font-bold text-lg mb-2 text-[#00A8E8]">ST & NXP & SiLabs</h4><p class="text-gray-700"><strong>Arm生态中坚</strong></p><p class="text-sm text-gray-500 mt-1">深度绑定Arm Cortex-M/A生态，拥有庞大的产品组合与开发者基础。</p></div><div class="arch-card" style="border-color: #F7931E;"><h4 class="font-bold text-lg mb-2 text-[#F7931E]">Microchip & 瑞萨</h4><p class="text-gray-700"><strong>多架构策略</strong></p><p class="text-sm text-gray-500 mt-1">同时提供Arm、自有内核(PIC, AVR, RX)及其他架构，满足多样化市场需求。</p></div></div></div>
+            </div>
+        </section>
+
+        <section id="guidance" class="mb-16">
+            <h2 class="text-3xl font-bold text-center text-[#003459] mb-8">决策罗盘：投资与开发选型指南</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">N</div>Nordic 阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>适合看好“物联网领域的苹果”模式、追求高成长的投资者。Nordic正全力打造软硬一体的闭环生态。<br><b>机遇：</b>对Neuton.ai和Atlazo的整合有望带来技术代差优势，绑定TSMC等顶级代工厂确保了先进工艺的供应。生态一旦成功，用户粘性和利润率极高。<br><b>风险：</b>执行风险是关键，整合效果待观察。作为Fabless厂商，其产能与成本受代工伙伴影响大。属高风险高回报的成长型标的。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>功耗极其敏感的智能设备（可穿戴、医疗传感器）且核心技术为蓝牙LE的项目首选。<br><b>核心优势：</b>顶级的nRF Connect SDK开发体验。未来深度整合的Neuton.ai将极大降低AI开发门槛，尤其适合无专业算法团队的开发者。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">Q</div>高通阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>看好“边缘计算性能为王”和高端物联网市场的投资者。<br><b>机遇：</b>在需强大算力的场景（AI PC、智能座舱）地位难以撼动。与TSMC和三星的合作确保了其在先进制程上的灵活性和产能。<br><b>风险：</b>方案成本与功耗偏高，市场覆盖有局限。作为Fabless厂商，利润空间受代工厂影响，同时面临英伟达等跨界竞争。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>需强大AI算力、先进连接技术（5G/Wi-Fi 6）和专业MLOps流程的项目（智能摄像头、无人机）。<br><b>核心优势：</b>顶级处理器性能和AI引擎。收购Edge Impulse后，将提供专业级端到端开发流程。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">S</div>ST 阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>偏好稳健增长和市场广度的价值型投资者。<br><b>机遇：</b>庞大的STM32生态是深深的护城河。作为IDM/Fab-Lite厂商，其自有晶圆厂（部分合作）保障了供应链的稳定性和成本控制能力，在产能紧张时优势明显。<br><b>风险：</b>船大难掉头，创新聚焦可能不足。在特定高性能领域会受专精型对手冲击。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>通用MCU项目的“默认选项”，尤其适合预算有限，希望利用免费、成熟工具链（STM32Cube.AI）的开发者。<br><b>核心优势：</b>极高的市场普及率、海量学习资源、丰富产品选择和强大的生态工具。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">X</div>NXP 阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>看好汽车电子和工业物联网黄金赛道的投资者。<br><b>机遇：</b>IDM模式和对供应链的强力控制，使其在汽车和工业领域获得客户高度信任。参与合资建厂（如与TSMC）显示了其保障未来产能的决心。<br><b>风险：</b>高度依赖汽车行业周期性波动。消费物联网领域的灵活性和品牌影响力不如对手。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>汽车、工业控制、安全支付等高可靠、高安全性要求的项目首选，特别是需车规级认证的项目。<br><b>核心优势：</b>顶级的安全功能、丰富的车规/工规级产品、强大的实时控制能力。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">SL</div>Silicon Labs 阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>看好物联网协议融合与安全的专业领域投资者。<br><b>机遇：</b>在智能家居（Matter/Thread）等多协议场景优势明显。Fabless模式使其运营灵活，聚焦设计。<br><b>风险：</b>天花板相对较低，AI能力依赖第三方，存在生态被釜底抽薪的风险。供应链完全依赖外部代工厂。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>需同时支持多种无线协议（蓝牙+Zigbee/Thread）的项目，如智能家居网关、智能门锁。<br><b>核心优势：</b>业界领先的多协议共存技术、一流的射频性能和强大的安全性。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">E</div>乐鑫阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>寻求高成长性和颠覆性机会的风险偏好型投资者。<br><b>机遇：</b>全面拥抱RISC-V和开源生态，绑定TSMC确保了产能和品质，以极致性价比快速抢占消费物联网市场。<br><b>风险：</b>Fabless模式叠加低价策略，利润率偏低。要进入高可靠性的工业/汽车市场仍需努力。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>快速原型验证、个人DIY项目、成本敏感的消费类产品的首选。<br><b>核心优势：</b>极低的硬件成本、无与伦比的社区支持和开源资源、简洁易用的软件栈。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">R</div>瑞萨阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>看好传统工业和家电智能化升级，并相信其能成功整合收购资产的投资者。<br><b>机遇：</b>Fab-Lite模式使其兼具自有产能的稳定性和外包先进工艺的灵活性（依赖TSMC）。若整合Dialog、Reality AI成功，将释放巨大潜力。<br><b>风险：</b>整合风险是最大不确定性。日系企业文化在瞬息万变的市场中可能反应速度偏慢。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>工业自动化、白色家电、电机控制等项目。需要非视觉传感AI（声音/振动异常检测）的独特选择。<br><b>核心优势：</b>高品质MCU和模拟器件、在特定工业领域的深厚积累。</p></div></div></div>
+                <div class="guidance-card"><div class="p-6 bg-[#003459] text-white"><h3 class="text-2xl font-bold flex items-center"><div class="camp-icon bg-white text-[#003459] mr-4 w-12 h-12 text-2xl">M</div>Microchip 阵营</h3></div><div class="p-6 space-y-4"><div><h4 class="font-bold text-lg text-[#007EA7]">致投资者</h4><p class="text-sm"><b>投资画像：</b>追求极度稳定和业务多元化的防御型投资者。<br><b>机遇：</b>作为IDM厂商，对供应链的掌控力极强，业务多元化使其抗风险能力出众，在经济下行周期中表现稳健。<br><b>风险：</b>创新并非其最强项，更像一个高效的整合者。自有AI解决方案仍处于追赶阶段。</p></div><div><h4 class="font-bold text-lg text-[#007EA7]">致开发者</h4><p class="text-sm"><b>选型指南：</b>需要大量不同种类MCU（8位到32位）和丰富模拟/外设器件时，是理想的一站式供应商。<br><b>核心优势：</b>“总有一款适合你”的超广泛产品线、强大的模拟器件组合、稳健可靠的产品质量。</p></div></div></div>
+
+            </div>
+        </section>
+        
+        <footer class="text-center text-gray-500 text-sm mt-12">
+            <p>数据综合自公开市场报告与公司公告。</p>
+            <p>Infographic by Gemini. &copy; 2025</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const chartOptions = (isDonut = false) => ({
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    bodyFont: {
+                        size: 14,
+                        family: "'Noto Sans SC', sans-serif"
+                    },
+                    titleFont: {
+                        size: 16,
+                        family: "'Noto Sans SC', sans-serif"
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        },
+                        font: {
+                            family: "'Noto Sans SC', sans-serif"
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: {
+                            family: "'Noto Sans SC', sans-serif",
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        window.onload = function() {
+            const mcuCtx = document.getElementById('mcuMarketShareChart').getContext('2d');
+            new Chart(mcuCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['英飞凌 (Infineon)', '恩智浦 (NXP)', '意法半导体 (ST)', '德州仪器 (TI)', '瑞萨 (Renesas)', '其他'],
+                    datasets: [{
+                        label: 'MCU 市场份额',
+                        data: [21.3, 10.4, 8.8, 8.4, 6.8, 44.3],
+                        backgroundColor: ['#003459', '#004A7C', '#005F9F', '#007EA7', '#00A8E8', '#CED4DA'],
+                        borderRadius: 4
+                    }]
+                },
+                options: chartOptions()
+            });
+
+            const bleCtx = document.getElementById('bleMarketShareChart').getContext('2d');
+            new Chart(bleCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Nordic Semi.', '高通', 'Silicon Labs', '瑞萨(Dialog)', '德州仪器', '意法半导体', '英飞凌(Cypress)', '乐鑫', '泰凌微', '其他'],
+                    datasets: [{
+                        label: '蓝牙BLE芯片市场份额',
+                        data: [40, 15, 10, 8, 7, 5, 4, 3, 2, 6],
+                        backgroundColor: ['#003459', '#004A7C', '#005F9F', '#007EA7', '#00A8E8', '#6CBDE8', '#92D1ED', '#B8E3F2', '#D0EAF8', '#CED4DA'],
+                        borderRadius: 4
+                    }]
+                },
+                options: chartOptions()
+            });
+
+            const rfCtx = document.getElementById('rfMarketShareChart').getContext('2d');
+            new Chart(rfCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['高通', '博通', '思佳讯', 'Qorvo', '村田', '其他'],
+                     datasets: [{
+                        label: '射频前端市场份额',
+                        data: [32, 21, 14, 13, 9, 11],
+                        backgroundColor: ['#003459', '#004A7C', '#005F9F', '#007EA7', '#00A8E8', '#CED4DA'],
+                        borderRadius: 4
+                    }]
+                },
+                options: chartOptions()
+            });
+        };
+    </script>
+</body>
+</html>
