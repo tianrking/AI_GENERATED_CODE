@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-lang="pageTitle">動態四旋翼混控與姿態可視化工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+        }
+        .perspective-container {
+            perspective: 1200px;
+        }
+        .motor {
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+        }
+        .slider-label {
+            min-width: 120px;
+        }
+        /* 旋转动画 */
+        @keyframes spin-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        @keyframes spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin-ccw { animation: spin-ccw 2s linear infinite; }
+        .spin-cw { animation: spin-cw 2s linear infinite; }
+
+        /* 3D姿态指示器 */
+        .attitude-cube-container {
+            transform-style: preserve-3d;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .attitude-cube {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .face {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border: 1.5px solid rgba(129, 140, 248, 0.3);
+            background: rgba(199, 210, 254, 0.05);
+            backdrop-filter: blur(1px);
+        }
+        .front  { transform: rotateY(  0deg) translateZ(60px); border-color: rgba(239, 68, 68, 0.7); }
+        .back   { transform: rotateY(180deg) translateZ(60px); }
+        .left   { transform: rotateY(-90deg) translateZ(60px); }
+        .right  { transform: rotateY( 90deg) translateZ(60px); }
+        .top    { transform: rotateX( 90deg) translateZ(60px); }
+        .bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+        /* 精确的正交坐标轴 */
+        .axis {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 160px;
+            height: 3px;
+            transform-style: preserve-3d;
+        }
+        .axis .line {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: currentColor;
+            border-radius: 2px;
+        }
+        .axis .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            top: -5.5px;
+            left: 100%;
+            border-width: 7px 0 7px 14px;
+            border-color: transparent transparent transparent currentColor;
+        }
+        .x-axis { color: #ef4444; transform: translate(-50%, -50%) rotateY(0deg); }
+        .y-axis { color: #22c55e; transform: translate(-50%, -50%) rotateZ(90deg); }
+        .z-axis { color: #3b82f6; transform: translate(-50%, -50%) rotateY(90deg); }
+
+        /* 趋势指示环 */
+        .ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            border: 2px dashed;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform-style: preserve-3d;
+        }
+        .ring svg {
+            position: absolute;
+            width: 20px; height: 20px;
+            top: -10px; left: 50%;
+            transform: translateX(-50%);
+            animation: spin-cw 2s linear infinite;
+        }
+        .roll-ring  { color: #ef4444; transform: translate(-50%, -50%) rotateY(90deg); }
+        .pitch-ring { color: #22c55e; transform: translate(-50%, -50%) rotateX(90deg); }
+        .yaw-ring   { color: #3b82f6; transform: translate(-50%, -50%); }
+
+        /* 自定义滑块样式 */
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: #e5e7eb; border-radius: 9999px; outline: none; transition: background .2s; }
+        input[type="range"]:hover { background: #d1d5db; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #4f46e5; cursor: pointer; border-radius: 50%; border: 3px solid white; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #4f46e5; cursor: pointer; border-radius: 50%; border: 3px solid white; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        
+        /* 语言切换器 */
+        .lang-switcher button.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4 md:p-8">
+
+    <div class="w-full max-w-7xl mx-auto">
+        <div class="relative text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800" data-lang="headerTitle">動態四旋翼混控與姿態可視化</h1>
+            <p class="text-slate-500 mt-2" data-lang="headerSubtitle">拖動右側滑塊，觀察左側飛行器模型的變化。</p>
+            
+            <!-- 语言切换器 -->
+            <div class="lang-switcher absolute top-0 right-0 flex gap-1 bg-slate-200 p-1 rounded-lg">
+                <button data-lang-btn="zh-TW" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors active">繁</button>
+                <button data-lang-btn="en" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">EN</button>
+                <button data-lang-btn="es" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">ES</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-2xl shadow-xl p-6 md:p-10">
+            
+            <!-- 左侧: 可视化区域 -->
+            <div class="w-full lg:w-1/2 flex items-center justify-center aspect-square relative perspective-container">
+                <div class="absolute w-full h-full" id="quad-visualization">
+                    <!-- 机架 -->
+                    <div class="absolute top-1/2 left-1/2 w-full h-2 bg-slate-300 rounded-full transform -translate-x-1/2 -translate-y-1/2 rotate-45"></div>
+                    <div class="absolute top-1/2 left-1/2 w-full h-2 bg-slate-300 rounded-full transform -translate-x-1/2 -translate-y-1/2 -rotate-45"></div>
+                    
+                    <!-- 中央3D姿态指示器 -->
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <div id="attitude-indicator" class="attitude-cube-container">
+                            <div class="attitude-cube">
+                                <div class="face front"><span class="bg-red-500 px-2 py-0.5 rounded-sm text-sm" data-lang="faceFront">前</span></div>
+                                <div class="face back"></div> <div class="face left"></div> <div class="face right"></div>
+                                <div class="face top"></div> <div class="face bottom"></div>
+                            </div>
+                            <div class="axis x-axis"><div class="line"></div><div class="arrow"></div></div>
+                            <div class="axis y-axis"><div class="line"></div><div class="arrow"></div></div>
+                            <div class="axis z-axis"><div class="line"></div><div class="arrow"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- 趋势指示环 -->
+                    <div id="roll-ring" class="ring roll-ring"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg></div>
+                    <div id="pitch-ring" class="ring pitch-ring"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg></div>
+                    <div id="yaw-ring" class="ring yaw-ring"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg></div>
+                    
+                    <!-- 电机 -->
+                    <div class="absolute top-[2%] right-[2%] w-28 h-28">
+                        <div class="motor w-full h-full bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white relative">
+                            <span class="z-10">1</span>
+                            <svg class="spin-ccw absolute w-24 h-24 text-white opacity-40 z-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-[2%] left-[2%] w-28 h-28">
+                        <div class="motor w-full h-full bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white relative">
+                            <span class="z-10">2</span>
+                            <svg class="spin-ccw absolute w-24 h-24 text-white opacity-40 z-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        </div>
+                    </div>
+                    <div class="absolute top-[2%] left-[2%] w-28 h-28">
+                        <div class="motor w-full h-full bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white relative">
+                            <span class="z-10">3</span>
+                            <svg class="spin-cw absolute w-24 h-24 text-white opacity-40 z-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 6.219-8.56"/></svg>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-[2%] right-[2%] w-28 h-28">
+                        <div class="motor w-full h-full bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white relative">
+                            <span class="z-10">4</span>
+                            <svg class="spin-cw absolute w-24 h-24 text-white opacity-40 z-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 6.219-8.56"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧: 控制滑块 -->
+            <div class="w-full lg:w-1/2 flex flex-col justify-center gap-8 p-4">
+                <div class="flex items-center gap-4">
+                    <label for="thrust" class="slider-label text-right font-medium text-slate-700" data-lang="labelThrust">油门 (Thrust)</label>
+                    <input id="thrust" type="range" min="0" max="100" value="50" class="w-full">
+                    <span id="thrust-value" class="font-mono text-slate-600 w-12 text-center">50</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label for="roll" class="slider-label text-right font-medium text-slate-700" data-lang="labelRoll">横滚 (Roll)</label>
+                    <input id="roll" type="range" min="-50" max="50" value="0" class="w-full">
+                    <span id="roll-value" class="font-mono text-slate-600 w-12 text-center">0</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label for="pitch" class="slider-label text-right font-medium text-slate-700" data-lang="labelPitch">俯仰 (Pitch)</label>
+                    <input id="pitch" type="range" min="-50" max="50" value="0" class="w-full">
+                    <span id="pitch-value" class="font-mono text-slate-600 w-12 text-center">0</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label for="yaw" class="slider-label text-right font-medium text-slate-700" data-lang="labelYaw">偏航 (Yaw)</label>
+                    <input id="yaw" type="range" min="-50" max="50" value="0" class="w-full">
+                    <span id="yaw-value" class="font-mono text-slate-600 w-12 text-center">0</span>
+                </div>
+                <button id="reset-btn" class="mt-8 bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ease-in-out shadow-lg hover:shadow-xl" data-lang="buttonReset">
+                    重置所有
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 语言翻译数据 ---
+        const translations = {
+            'zh-TW': {
+                pageTitle: "動態四旋翼混控與姿態可視化工具",
+                headerTitle: "動態四旋翼混控與姿態可視化",
+                headerSubtitle: "拖動右側滑塊，觀察左側飛行器模型的變化。",
+                labelThrust: "油門 (Thrust)",
+                labelRoll: "橫滾 (Roll)",
+                labelPitch: "俯仰 (Pitch)",
+                labelYaw: "偏航 (Yaw)",
+                buttonReset: "重設所有",
+                faceFront: "前"
+            },
+            'en': {
+                pageTitle: "Dynamic Quadcopter Mixer & Attitude Visualization Tool",
+                headerTitle: "Dynamic Quadcopter Mixer & Attitude Visualization",
+                headerSubtitle: "Drag the sliders on the right to observe the changes in the aircraft model on the left.",
+                labelThrust: "Thrust",
+                labelRoll: "Roll",
+                labelPitch: "Pitch",
+                labelYaw: "Yaw",
+                buttonReset: "Reset All",
+                faceFront: "Front"
+            },
+            'es': {
+                pageTitle: "Herramienta de Visualización Dinámica de Mezclador y Actitud de Cuadricóptero",
+                headerTitle: "Visualización Dinámica de Mezclador y Actitud",
+                headerSubtitle: "Arrastre los deslizadores de la derecha para observar los cambios en el modelo de la aeronave a la izquierda.",
+                labelThrust: "Empuje",
+                labelRoll: "Alabeo",
+                labelPitch: "Cabeceo",
+                labelYaw: "Guiñada",
+                buttonReset: "Reiniciar Todo",
+                faceFront: "Frente"
+            }
+        };
+
+        // --- DOM 元素获取 ---
+        const thrustSlider = document.getElementById('thrust');
+        const rollSlider = document.getElementById('roll');
+        const pitchSlider = document.getElementById('pitch');
+        const yawSlider = document.getElementById('yaw');
+
+        const thrustValue = document.getElementById('thrust-value');
+        const rollValue = document.getElementById('roll-value');
+        const pitchValue = document.getElementById('pitch-value');
+        const yawValue = document.getElementById('yaw-value');
+
+        const motorElements = [
+            document.querySelector('.absolute.top-\\[2\\%\\].right-\\[2\\%\\]'),
+            document.querySelector('.absolute.bottom-\\[2\\%\\].left-\\[2\\%\\]'),
+            document.querySelector('.absolute.top-\\[2\\%\\].left-\\[2\\%\\]'),
+            document.querySelector('.absolute.bottom-\\[2\\%\\].right-\\[2\\%\\]')
+        ];
+        
+        const attitudeIndicator = document.getElementById('attitude-indicator');
+        const rollRing = document.getElementById('roll-ring');
+        const pitchRing = document.getElementById('pitch-ring');
+        const yawRing = document.getElementById('yaw-ring');
+        const resetButton = document.getElementById('reset-btn');
+        const langButtons = document.querySelectorAll('[data-lang-btn]');
+
+        // --- 核心功能 ---
+        function updateMotorVisualization() {
+            const thrust = parseFloat(thrustSlider.value);
+            const roll = parseFloat(rollSlider.value);
+            const pitch = parseFloat(pitchSlider.value);
+            const yaw = parseFloat(yawSlider.value);
+
+            thrustValue.textContent = thrust.toFixed(0);
+            rollValue.textContent = roll.toFixed(0);
+            pitchValue.textContent = pitch.toFixed(0);
+            yawValue.textContent = yaw.toFixed(0);
+
+            // 标准 PX4 'X' 型布局混控算法
+            let m1 = thrust - roll - pitch - yaw;
+            let m2 = thrust + roll + pitch - yaw;
+            let m3 = thrust + roll - pitch + yaw;
+            let m4 = thrust - roll + pitch + yaw;
+            
+            const motorOutputs = [m1, m2, m3, m4];
+            
+            const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
+            const clampedOutputs = motorOutputs.map(val => clamp(val, 0, 100));
+
+            motorElements.forEach((container, index) => {
+                const motorEl = container.querySelector('.motor');
+                const spinnerEl = container.querySelector('svg');
+                const output = clampedOutputs[index];
+
+                const scale = 0.7 + (output / 100) * 0.5;
+                motorEl.style.transform = `scale(${scale})`;
+                const motorColor = motorEl.classList.contains('bg-blue-500') ? '59, 130, 246' : '34, 197, 94';
+                motorEl.style.boxShadow = `0 0 ${output / 4}px ${output / 6}px rgba(${motorColor}, ${output/120})`;
+                motorEl.querySelector('span').textContent = output.toFixed(0);
+                
+                if (output > 5) {
+                    const duration = 2.0 - (output / 100) * 1.95;
+                    spinnerEl.style.animationDuration = `${duration}s`;
+                    spinnerEl.style.opacity = '0.4';
+                } else {
+                    spinnerEl.style.opacity = '0';
+                }
+            });
+
+            attitudeIndicator.style.transform = `rotateZ(${-yaw}deg) rotateY(${-roll}deg) rotateX(${pitch}deg)`;
+
+            const updateRing = (ring, value) => {
+                const absValue = Math.abs(value);
+                if (absValue > 1) {
+                    ring.style.opacity = absValue / 50;
+                    ring.style.transform = `${ring.style.transform.split('scale')[0]} scale(${1 + absValue / 100})`;
+                    ring.querySelector('svg').style.animationDirection = value > 0 ? 'normal' : 'reverse';
+                } else {
+                    ring.style.opacity = 0;
+                }
+            };
+            
+            updateRing(rollRing, roll);
+            updateRing(pitchRing, pitch);
+            updateRing(yawRing, yaw);
+        }
+        
+        function resetSliders() {
+            thrustSlider.value = 50;
+            rollSlider.value = 0;
+            pitchSlider.value = 0;
+            yawSlider.value = 0;
+            updateMotorVisualization();
+        }
+
+        // --- 语言切换功能 ---
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            const translation = translations[lang];
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (translation[key]) {
+                    el.textContent = translation[key];
+                }
+            });
+            langButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.langBtn === lang);
+            });
+        }
+
+        // --- 事件监听器 ---
+        [thrustSlider, rollSlider, pitchSlider, yawSlider].forEach(slider => {
+            slider.addEventListener('input', updateMotorVisualization);
+        });
+        resetButton.addEventListener('click', resetSliders);
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setLanguage(btn.dataset.langBtn);
+            });
+        });
+
+        // --- 初始化 ---
+        window.addEventListener('load', () => {
+            setLanguage('zh-TW'); // 默认设置为繁体中文
+            updateMotorVisualization();
+        });
+    </script>
+</body>
+</html>
