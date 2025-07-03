@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiwi Drive Kinematics Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f8fafc; /* bg-slate-50 */
+            background-image: radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0);
+            background-size: 2rem 2rem;
+        }
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px;
+            background: #4f46e5; /* indigo-600 */
+            cursor: pointer; border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        input[type=range]:hover .slider-thumb, .slider-thumb:hover {
+             transform: scale(1.1);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px;
+            background: #4f46e5;
+            cursor: pointer; border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            margin-top: -8px; 
+            transition: all 0.2s ease-in-out;
+        }
+        input[type=range]:hover::-webkit-slider-thumb {
+            transform: scale(1.1);
+            background: #6366f1;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px; height: 20px;
+            background: #4f46e5;
+            cursor: pointer; border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        input[type=range]:hover::-moz-range-thumb {
+            transform: scale(1.1);
+            background: #6366f1;
+        }
+        .lang-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .lang-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .glowing-vector {
+            filter: url(#glow);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 antialiased">
+
+    <div class="main-container w-full max-w-6xl rounded-2xl shadow-2xl p-6 md:p-8 relative border border-slate-200">
+        <!-- Language Switcher -->
+        <div id="lang-switcher" class="absolute top-4 right-4 flex space-x-1 bg-gray-200/80 p-1 rounded-full">
+            <button data-lang-code="zh-TW" class="lang-btn px-3 py-1 text-sm rounded-full">繁體</button>
+            <button data-lang-code="en" class="lang-btn px-3 py-1 text-sm rounded-full">EN</button>
+            <button data-lang-code="es" class="lang-btn px-3 py-1 text-sm rounded-full">ES</button>
+        </div>
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900" data-lang="title"></h1>
+            <p class="text-gray-500 mt-2 max-w-2xl mx-auto" data-lang="subtitle"></p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Panel: Visualization -->
+            <div class="flex items-center justify-center p-4 bg-slate-50/50 rounded-xl border border-slate-200">
+                <svg id="robot-svg" width="300" height="300" viewBox="-150 -150 300 300">
+                    <defs>
+                        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3.5" result="coloredBlur"></feGaussianBlur>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"></feMergeNode>
+                                <feMergeNode in="SourceGraphic"></feMergeNode>
+                            </feMerge>
+                        </filter>
+                        <marker id="arrowhead-y" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" /></marker>
+                        <marker id="arrowhead-x" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" /></marker>
+                        <marker id="arrowhead-wheel" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316" /></marker>
+                        <marker id="arrowhead-v" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e" /></marker>
+                        <marker id="arrowhead-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6" /></marker>
+                    </defs>
+                    <line x1="0" y1="0" x2="0" y2="-100" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
+                    <line x1="0" y1="0" x2="-86.6" y2="50" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
+                    <line x1="0" y1="0" x2="86.6" y2="50" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
+                    <circle cx="0" cy="0" r="100" fill="none" stroke="#94a3b8" stroke-width="3" />
+                    <circle cx="0" cy="0" r="10" fill="#334155" />
+                    <line x1="0" y1="0" x2="0" y2="-120" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrowhead-y)" />
+                    <text x="5" y="-110" fill="#f43f5e" font-size="12" font-weight="bold" data-lang="axis_y"></text>
+                    <line x1="0" y1="0" x2="120" y2="0" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrowhead-x)" />
+                    <text x="110" y="15" fill="#3b82f6" font-size="12" font-weight="bold" data-lang="axis_x"></text>
+                    <g id="wheel-group-1">
+                        <line class="wheel-body" id="wheel1-body" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+                        <line class="wheel-arrow" id="wheel1-arrow" stroke="#f97316" stroke-width="4" marker-end="url(#arrowhead-wheel)" />
+                        <path class="right-angle" id="wheel1-angle" fill="none" stroke="#10b981" stroke-width="2"/>
+                        <text x="10" y="-115" font-size="12" font-weight="bold" data-lang="wheel_1"></text>
+                    </g>
+                    <g id="wheel-group-2">
+                        <line class="wheel-body" id="wheel2-body" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+                        <line class="wheel-arrow" id="wheel2-arrow" stroke="#f97316" stroke-width="4" marker-end="url(#arrowhead-wheel)" />
+                        <path class="right-angle" id="wheel2-angle" fill="none" stroke="#10b981" stroke-width="2"/>
+                        <text x="-115" y="60" font-size="12" font-weight="bold" data-lang="wheel_2"></text>
+                    </g>
+                    <g id="wheel-group-3">
+                        <line class="wheel-body" id="wheel3-body" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+                        <line class="wheel-arrow" id="wheel3-arrow" stroke="#f97316" stroke-width="4" marker-end="url(#arrowhead-wheel)" />
+                        <path class="right-angle" id="wheel3-angle" fill="none" stroke="#10b981" stroke-width="2"/>
+                        <text x="95" y="60" font-size="12" font-weight="bold" data-lang="wheel_3"></text>
+                    </g>
+                    <g class="glowing-vector"><line id="velocity-vector" x1="0" y1="0" x2="0" y2="0" stroke="#22c55e" stroke-width="3" marker-end="url(#arrowhead-v)"/></g>
+                    <g class="glowing-vector"><path id="rotation-vector" d="" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrowhead-w)"/></g>
+                </svg>
+            </div>
+
+            <!-- Right Panel: Controls and Outputs -->
+            <div class="flex flex-col justify-center space-y-6">
+                <div class="space-y-4 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 shadow-sm">
+                    <h3 class="font-bold text-lg text-indigo-800" data-lang="inputs_title"></h3>
+                    <div>
+                        <label for="vx" class="block text-sm font-medium text-gray-700"><span data-lang="vx_label"></span>: <span id="vx-val" class="font-bold text-indigo-600">0.0</span> m/s</label>
+                        <input type="range" id="vx" min="-1" max="1" step="0.1" value="0" class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="vy" class="block text-sm font-medium text-gray-700"><span data-lang="vy_label"></span>: <span id="vy-val" class="font-bold text-indigo-600">0.0</span> m/s</label>
+                        <input type="range" id="vy" min="-1" max="1" step="0.1" value="0" class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="omega" class="block text-sm font-medium text-gray-700"><span data-lang="omega_label"></span>: <span id="omega-val" class="font-bold text-indigo-600">0.0</span> rad/s</label>
+                        <input type="range" id="omega" min="-5" max="5" step="0.1" value="0" class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                     <div>
+                        <label for="radius" class="block text-sm font-medium text-gray-700"><span data-lang="radius_label"></span>: <span id="radius-val" class="font-bold text-indigo-600">0.10</span> m</label>
+                        <input type="range" id="radius" min="0.05" max="0.2" step="0.01" value="0.1" class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="space-y-3 p-5 bg-emerald-50/50 rounded-xl border border-emerald-100 shadow-sm">
+                    <h3 class="font-bold text-lg text-emerald-800" data-lang="outputs_title"></h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700" data-lang="v1_label"></span>
+                        <span id="v1-out" class="font-mono text-lg font-bold text-emerald-600 bg-white px-3 py-1 rounded-md">0.00 m/s</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700" data-lang="v2_label"></span>
+                        <span id="v2-out" class="font-mono text-lg font-bold text-emerald-600 bg-white px-3 py-1 rounded-md">0.00 m/s</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700" data-lang="v3_label"></span>
+                        <span id="v3-out" class="font-mono text-lg font-bold text-emerald-600 bg-white px-3 py-1 rounded-md">0.00 m/s</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 p-5 bg-amber-50/50 rounded-xl border border-amber-100 shadow-sm">
+                    <h3 class="font-bold text-lg text-amber-800" data-lang="calculation_title"></h3>
+                    <div class="font-mono text-sm leading-relaxed">
+                        <p>v1 = -Vx + ω * R</p>
+                        <p class="formula p-2 rounded-lg bg-white/80">
+                            <span class="font-bold">v1</span> = -(<span class="text-blue-600 font-bold" id="f_vx1">0.0</span>) + <span class="text-blue-600 font-bold" id="f_omega1">0.0</span> * <span class="text-blue-600 font-bold" id="f_r1">0.10</span> = <span class="text-green-600 font-bold" id="f_v1_res">0.00</span>
+                        </p>
+                    </div>
+                     <div class="font-mono text-sm leading-relaxed mt-2">
+                        <p>v2 = 0.5*Vx - 0.866*Vy + ω*R</p>
+                        <p class="formula p-2 rounded-lg bg-white/80">
+                            <span class="font-bold">v2</span> = 0.5*(<span class="text-blue-600 font-bold" id="f_vx2">0.0</span>) - 0.866*(<span class="text-blue-600 font-bold" id="f_vy2">0.0</span>) + <span class="text-blue-600 font-bold" id="f_omega2">0.0</span>*<span class="text-blue-600 font-bold" id="f_r2">0.10</span> = <span class="text-green-600 font-bold" id="f_v2_res">0.00</span>
+                        </p>
+                    </div>
+                     <div class="font-mono text-sm leading-relaxed mt-2">
+                        <p>v3 = 0.5*Vx + 0.866*Vy + ω*R</p>
+                        <p class="formula p-2 rounded-lg bg-white/80">
+                            <span class="font-bold">v3</span> = 0.5*(<span class="text-blue-600 font-bold" id="f_vx3">0.0</span>) + 0.866*(<span class="text-blue-600 font-bold" id="f_vy3">0.0</span>) + <span class="text-blue-600 font-bold" id="f_omega3">0.0</span>*<span class="text-blue-600 font-bold" id="f_r3">0.10</span> = <span class="text-green-600 font-bold" id="f_v3_res">0.00</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            'zh-TW': {
+                title: "Kiwi Drive 運動學求解器",
+                subtitle: "透過調整期望速度，即時檢視三個輪子的求解結果與計算過程。",
+                axis_y: "Y (前)",
+                axis_x: "X (右)",
+                wheel_1: "輪1",
+                wheel_2: "輪2",
+                wheel_3: "輪3",
+                inputs_title: "輸入參數 (期望運動)",
+                vx_label: "左右平移速度 (Vx)",
+                vy_label: "前後平移速度 (Vy)",
+                omega_label: "旋轉角速度 (ω)",
+                radius_label: "底盤半徑 (R)",
+                outputs_title: "輸出結果 (輪速求解)",
+                v1_label: "輪1 速度 (v1)",
+                v2_label: "輪2 速度 (v2)",
+                v3_label: "輪3 速度 (v3)",
+                calculation_title: "動態計算過程",
+            },
+            en: {
+                title: "Kiwi Drive Kinematics Solver",
+                subtitle: "Adjust desired velocity to see real-time wheel speed solutions and calculations.",
+                axis_y: "Y (Fwd)",
+                axis_x: "X (Right)",
+                wheel_1: "Wheel 1",
+                wheel_2: "Wheel 2",
+                wheel_3: "Wheel 3",
+                inputs_title: "Input Parameters (Desired Motion)",
+                vx_label: "Lateral Velocity (Vx)",
+                vy_label: "Forward Velocity (Vy)",
+                omega_label: "Angular Velocity (ω)",
+                radius_label: "Chassis Radius (R)",
+                outputs_title: "Output Results (Wheel Speeds)",
+                v1_label: "Wheel 1 Speed (v1)",
+                v2_label: "Wheel 2 Speed (v2)",
+                v3_label: "Wheel 3 Speed (v3)",
+                calculation_title: "Live Calculation",
+            },
+            es: {
+                title: "Solucionador de Cinemática Kiwi Drive",
+                subtitle: "Ajuste la velocidad deseada para ver soluciones y cálculos de la velocidad de las ruedas en tiempo real.",
+                axis_y: "Y (Adelante)",
+                axis_x: "X (Derecha)",
+                wheel_1: "Rueda 1",
+                wheel_2: "Rueda 2",
+                wheel_3: "Rueda 3",
+                inputs_title: "Parámetros de Entrada (Movimiento Deseado)",
+                vx_label: "Velocidad Lateral (Vx)",
+                vy_label: "Velocidad Frontal (Vy)",
+                omega_label: "Velocidad Angular (ω)",
+                radius_label: "Radio del Chasis (R)",
+                outputs_title: "Resultados (Velocidades de Rueda)",
+                v1_label: "Velocidad Rueda 1 (v1)",
+                v2_label: "Velocidad Rueda 2 (v2)",
+                v3_label: "Velocidad Rueda 3 (v3)",
+                calculation_title: "Cálculo en Vivo",
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang-code') === lang);
+            });
+        }
+
+        const vxSlider = document.getElementById('vx');
+        const vySlider = document.getElementById('vy');
+        const omegaSlider = document.getElementById('omega');
+        const radiusSlider = document.getElementById('radius');
+
+        const vxVal = document.getElementById('vx-val');
+        const vyVal = document.getElementById('vy-val');
+        const omegaVal = document.getElementById('omega-val');
+        const radiusVal = document.getElementById('radius-val');
+
+        const v1Out = document.getElementById('v1-out');
+        const v2Out = document.getElementById('v2-out');
+        const v3Out = document.getElementById('v3-out');
+
+        const velocityVector = document.getElementById('velocity-vector');
+        const rotationVector = document.getElementById('rotation-vector');
+        
+        const wheelElems = {
+            w1: { body: document.getElementById('wheel1-body'), arrow: document.getElementById('wheel1-arrow'), angle: document.getElementById('wheel1-angle') },
+            w2: { body: document.getElementById('wheel2-body'), arrow: document.getElementById('wheel2-arrow'), angle: document.getElementById('wheel2-angle') },
+            w3: { body: document.getElementById('wheel3-body'), arrow: document.getElementById('wheel3-arrow'), angle: document.getElementById('wheel3-angle') },
+        };
+        
+        const formulaSpans = {
+            vx1: document.getElementById('f_vx1'), vx2: document.getElementById('f_vx2'), vx3: document.getElementById('f_vx3'),
+            vy2: document.getElementById('f_vy2'), vy3: document.getElementById('f_vy3'),
+            omega1: document.getElementById('f_omega1'), omega2: document.getElementById('f_omega2'), omega3: document.getElementById('f_omega3'),
+            r1: document.getElementById('f_r1'), r2: document.getElementById('f_r2'), r3: document.getElementById('f_r3'),
+            v1_res: document.getElementById('f_v1_res'), v2_res: document.getElementById('f_v2_res'), v3_res: document.getElementById('f_v3_res'),
+        };
+
+        const SQRT3 = Math.sqrt(3);
+        const WHEEL_RADIUS = 100;
+        const WHEEL_HALF_LENGTH = 25;
+        const ANGLE_MARKER_SIZE = 12;
+
+        const wheelConfig = {
+            w1: { pos: { x: 0, y: -WHEEL_RADIUS }, tangentAngle: 180 * Math.PI / 180 },
+            w2: { pos: { x: -WHEEL_RADIUS * Math.cos(30 * Math.PI/180), y: WHEEL_RADIUS * Math.sin(30 * Math.PI/180) }, tangentAngle: 60 * Math.PI / 180 },
+            w3: { pos: { x: WHEEL_RADIUS * Math.cos(30 * Math.PI/180), y: WHEEL_RADIUS * Math.sin(30 * Math.PI/180) }, tangentAngle: 300 * Math.PI / 180 },
+        };
+
+        function drawStaticWheels() {
+            for (const key in wheelConfig) {
+                const config = wheelConfig[key];
+                const elems = wheelElems[key];
+                const { x, y } = config.pos;
+                const angle = config.tangentAngle;
+
+                const dx = WHEEL_HALF_LENGTH * Math.cos(angle);
+                const dy = WHEEL_HALF_LENGTH * Math.sin(angle);
+                elems.body.setAttribute('x1', x - dx);
+                elems.body.setAttribute('y1', y - dy);
+                elems.body.setAttribute('x2', x + dx);
+                elems.body.setAttribute('y2', y + dy);
+
+                const radiusVec = { x: x, y: y };
+                const radiusLen = Math.sqrt(radiusVec.x**2 + radiusVec.y**2);
+                const unitRadius = { x: radiusVec.x / radiusLen, y: radiusVec.y / radiusLen };
+                const unitTangent = { x: Math.cos(angle), y: Math.sin(angle) };
+                
+                const p1 = { x: x - ANGLE_MARKER_SIZE * unitRadius.x, y: y - ANGLE_MARKER_SIZE * unitRadius.y };
+                const p2 = { x: x, y: y };
+                const p3 = { x: x + ANGLE_MARKER_SIZE * unitTangent.x, y: y + ANGLE_MARKER_SIZE * unitTangent.y };
+                elems.angle.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+            }
+        }
+
+        function calculateKinematics() {
+            const Vx = parseFloat(vxSlider.value);
+            const Vy = parseFloat(vySlider.value);
+            const omega = parseFloat(omegaSlider.value);
+            const R = parseFloat(radiusSlider.value);
+
+            vxVal.textContent = Vx.toFixed(1);
+            vyVal.textContent = Vy.toFixed(1);
+            omegaVal.textContent = omega.toFixed(1);
+            radiusVal.textContent = R.toFixed(2);
+
+            const v1 = -Vx + omega * R;
+            const v2 = 0.5 * Vx - (SQRT3 / 2) * Vy + omega * R;
+            const v3 = 0.5 * Vx + (SQRT3 / 2) * Vy + omega * R;
+
+            v1Out.textContent = v1.toFixed(2) + ' m/s';
+            v2Out.textContent = v2.toFixed(2) + ' m/s';
+            v3Out.textContent = v3.toFixed(2) + ' m/s';
+            
+            updateVisualization(Vx, Vy, omega, {v1, v2, v3});
+            updateFormulas(Vx, Vy, omega, R, {v1, v2, v3});
+        }
+        
+        function updateFormulas(Vx, Vy, omega, R, results) {
+            formulaSpans.vx1.textContent = Vx.toFixed(1);
+            formulaSpans.omega1.textContent = omega.toFixed(1);
+            formulaSpans.r1.textContent = R.toFixed(2);
+            formulaSpans.v1_res.textContent = results.v1.toFixed(2);
+            
+            formulaSpans.vx2.textContent = Vx.toFixed(1);
+            formulaSpans.vy2.textContent = Vy.toFixed(1);
+            formulaSpans.omega2.textContent = omega.toFixed(1);
+            formulaSpans.r2.textContent = R.toFixed(2);
+            formulaSpans.v2_res.textContent = results.v2.toFixed(2);
+            
+            formulaSpans.vx3.textContent = Vx.toFixed(1);
+            formulaSpans.vy3.textContent = Vy.toFixed(1);
+            formulaSpans.omega3.textContent = omega.toFixed(1);
+            formulaSpans.r3.textContent = R.toFixed(2);
+            formulaSpans.v3_res.textContent = results.v3.toFixed(2);
+        }
+
+        function updateVisualization(vx, vy, w, wheelSpeeds) {
+            const vScale = 80; 
+            velocityVector.setAttribute('x2', vx * vScale);
+            velocityVector.setAttribute('y2', -vy * vScale);
+
+            if (Math.abs(w) > 0.1) {
+                const rotationRadius = 60;
+                const sweepFlag = w > 0 ? 1 : 0;
+                const startX = rotationRadius;
+                const startY = 0;
+                const endX = 0;
+                const endY = w > 0 ? -rotationRadius : rotationRadius;
+                const pathData = `M ${startX} ${startY} A ${rotationRadius} ${rotationRadius} 0 0 ${sweepFlag} ${endX} ${endY}`;
+                rotationVector.setAttribute('d', pathData);
+                rotationVector.style.display = 'block';
+            } else {
+                rotationVector.style.display = 'none';
+            }
+            
+            const wheelScale = 30;
+            const speeds = { w1: wheelSpeeds.v1, w2: wheelSpeeds.v2, w3: wheelSpeeds.v3 };
+
+            for (const key in wheelConfig) {
+                 const config = wheelConfig[key];
+                 const elems = wheelElems[key];
+                 const speed = speeds[key];
+                 const { x, y } = config.pos;
+                 const angle = config.tangentAngle;
+
+                 let effective_speed = speed;
+                 if (key === 'w1') effective_speed = -speed;
+                 
+                 const arrow_dx = effective_speed * wheelScale * Math.cos(angle);
+                 const arrow_dy = effective_speed * wheelScale * Math.sin(angle);
+
+                 elems.arrow.setAttribute('x1', x);
+                 elems.arrow.setAttribute('y1', y);
+                 elems.arrow.setAttribute('x2', x + arrow_dx);
+                 elems.arrow.setAttribute('y2', y + arrow_dy);
+            }
+        }
+
+        document.getElementById('lang-switcher').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const lang = e.target.getAttribute('data-lang-code');
+                setLanguage(lang);
+            }
+        });
+
+        drawStaticWheels();
+        setLanguage('zh-TW'); // Set default language
+        calculateKinematics();
+
+        vxSlider.addEventListener('input', calculateKinematics);
+        vySlider.addEventListener('input', calculateKinematics);
+        omegaSlider.addEventListener('input', calculateKinematics);
+        radiusSlider.addEventListener('input', calculateKinematics);
+    </script>
+</body>
+</html>
