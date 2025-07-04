@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五連桿機械臂藍圖模擬器 (v3.1)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
+        :root {
+            --bg-color: #eef2f7;
+            --canvas-bg: #ffffff;
+            --controls-bg: #f8f9fa;
+            --text-color: #212529;
+            --label-color: #495057;
+            --border-color: #dee2e6;
+            --accent-l: #007bff;
+            --accent-r: #fd7e14;
+            --accent-p: #dc3545;
+            --accent-link: #28a745;
+            --grid-color: #e9ecef;
+            --trajectory-l: rgba(255, 193, 7, 0.8);
+            --trajectory-r: rgba(23, 162, 184, 0.8);
+            --trajectory-base: rgba(150, 150, 150, 0.8);
+        }
+
+        body, html {
+            font-family: 'Noto Sans TC', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+        .main-container {
+            display: flex;
+            width: 95%;
+            height: 95%;
+            max-width: 1600px;
+            max-height: 900px;
+            background: var(--canvas-bg);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .canvas-wrapper {
+            flex-grow: 1;
+            height: 100%;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: var(--canvas-bg);
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to right, var(--grid-color) 1px, var(--canvas-bg) 1px);
+            background-size: 20px 20px;
+        }
+        .controls {
+            width: 320px;
+            flex-shrink: 0;
+            padding: 25px;
+            background-color: var(--controls-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .control-group { margin-bottom: 20px; }
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        label { font-weight: 500; color: var(--label-color); font-size: 0.9em; }
+        span { font-family: 'Roboto Mono', monospace; font-weight: 500; }
+        input[type="range"] { 
+            width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none;
+            height: 6px; background: #ddd; border-radius: 3px; outline: none;
+            transition: background 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        #theta1::-webkit-slider-thumb { background: var(--accent-l); }
+        #theta2::-webkit-slider-thumb { background: var(--accent-r); }
+        #baseRatio::-webkit-slider-thumb { background: var(--label-color); }
+        #info {
+            margin-top: auto; padding: 12px; font-size: 1em; font-family: 'Roboto Mono', monospace;
+            background-color: var(--bg-color); border-radius: 4px; text-align: center;
+            color: var(--text-color); border: 1px solid var(--border-color);
+        }
+        .error { color: var(--accent-p); font-weight: bold; }
+        #clear-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 5px; background-color: var(--accent-p);
+            color: white; font-size: 1em; font-weight: bold; cursor: pointer; transition: background-color 0.2s;
+        }
+        #clear-btn:hover { background-color: #c82333; }
+        
+        @media (max-width: 900px) {
+            body, html { height: auto; }
+            .main-container { flex-direction: column; width: 100%; height: 100%; border-radius: 0; }
+            .canvas-wrapper { aspect-ratio: 1.5/1; width: 100%; flex-grow: 0; }
+            .controls { width: 100%; box-sizing: border-box; border-left: none; border-top: 1px solid var(--border-color); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="canvas-wrapper">
+            <canvas id="robotCanvas"></canvas>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-header">
+                    <label for="theta1">左電機角度 (θ₁)</label>
+                    <span id="theta1_val" style="color: var(--accent-l);">120°</span>
+                </div>
+                <input type="range" id="theta1" min="0" max="180" value="120">
+            </div>
+            <div class="control-group">
+                <div class="control-header">
+                    <label for="theta2">右電機角度 (θ₂)</label>
+                    <span id="theta2_val" style="color: var(--accent-r);">60°</span>
+                </div>
+                <input type="range" id="theta2" min="0" max="180" value="60">
+            </div>
+            <div class="control-group">
+                <div class="control-header">
+                    <label for="baseRatio">電機間距 (M1-M2)</label>
+                    <span id="baseRatio_val" style="color: var(--label-color);">40%</span>
+                </div>
+                <input type="range" id="baseRatio" min="0.05" max="0.8" step="0.01" value="0.4">
+            </div>
+            <div class="control-group" style="margin-top: 20px;">
+                <button id="clear-btn">清除所有軌跡</button>
+            </div>
+            <div id="info">匯集點 (P): (-, -)</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('robotCanvas');
+        const ctx = canvas.getContext('2d');
+        const sliders = {
+            theta1: document.getElementById('theta1'),
+            theta2: document.getElementById('theta2'),
+            baseRatio: document.getElementById('baseRatio')
+        };
+        const clearBtn = document.getElementById('clear-btn');
+        const vals = {
+            theta1: document.getElementById('theta1_val'),
+            theta2: document.getElementById('theta2_val'),
+            baseRatio: document.getElementById('baseRatio_val')
+        };
+        const info = document.getElementById('info');
+
+        const L1_RATIO = 0.25, L2_RATIO = 0.35, L3_RATIO = 0.35, L4_RATIO = 0.25;
+        let L1, L2, L3, L4, motor1_pos, motor2_pos;
+        
+        // 軌跡數據結構: 每個鍵對應一個 "軌跡段" 數組
+        // 每個軌跡段本身是一個點的數組
+        let trajectories = { theta1: [], theta2: [], baseRatio: [] };
+        let activeSliderId = null;
+        const trajectoryColors = {
+            theta1: getComputedStyle(document.documentElement).getPropertyValue('--trajectory-l'),
+            theta2: getComputedStyle(document.documentElement).getPropertyValue('--trajectory-r'),
+            baseRatio: getComputedStyle(document.documentElement).getPropertyValue('--trajectory-base')
+        };
+
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            L1 = canvas.width * L1_RATIO; L2 = canvas.width * L2_RATIO;
+            L3 = canvas.width * L3_RATIO; L4 = canvas.width * L4_RATIO;
+            update();
+        }
+
+        function circleIntersection(p1, r1, p2, r2) {
+            const d_sq = (p2.x - p1.x)**2 + (p2.y - p1.y)**2;
+            const d = Math.sqrt(d_sq);
+            if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return null;
+            const a = (r1*r1 - r2*r2 + d_sq) / (2 * d);
+            const h = Math.sqrt(Math.max(0, r1*r1 - a*a));
+            const p3_x = p1.x + a * (p2.x - p1.x) / d;
+            const p3_y = p1.y + a * (p2.y - p1.y) / d;
+            const i1 = { x: p3_x + h * (p2.y - p1.y) / d, y: p3_y - h * (p2.x - p1.x) / d };
+            const i2 = { x: p3_x - h * (p2.y - p1.y) / d, y: p3_y + h * (p2.x - p1.x) / d };
+            return i1.y < i2.y ? i1 : i2;
+        }
+
+        function drawStyledLink(p1, p2, color) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.strokeStyle = `rgba(255,255,255,0.5)`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        function drawArm(t1, t2) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製所有軌跡
+            for (const id in trajectories) {
+                const segments = trajectories[id];
+                for (const points of segments) {
+                    if (points.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(points[0].x, points[0].y);
+                        for (let i = 1; i < points.length; i++) {
+                            ctx.lineTo(points[i].x, points[i].y);
+                        }
+                        ctx.strokeStyle = trajectoryColors[id];
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            const t1_rad = t1 * Math.PI / 180, t2_rad = t2 * Math.PI / 180;
+            const pos_B = { x: motor1_pos.x + L1 * Math.cos(t1_rad), y: motor1_pos.y - L1 * Math.sin(t1_rad) };
+            const pos_C = { x: motor2_pos.x + L4 * Math.cos(t2_rad), y: motor2_pos.y - L4 * Math.sin(t2_rad) };
+            const pos_P = circleIntersection(pos_B, L2, pos_C, L3);
+            
+            ctx.beginPath(); ctx.moveTo(motor1_pos.x, motor1_pos.y); ctx.lineTo(motor2_pos.x, motor2_pos.y);
+            ctx.strokeStyle = '#adb5bd'; ctx.lineWidth = 2; ctx.stroke();
+            
+            if (!pos_P) {
+                info.innerHTML = '<span class="error">當前參數無解！</span>';
+                return;
+            }
+
+            drawStyledLink(motor1_pos, pos_B, getComputedStyle(document.documentElement).getPropertyValue('--accent-l'));
+            drawStyledLink(motor2_pos, pos_C, getComputedStyle(document.documentElement).getPropertyValue('--accent-r'));
+            drawStyledLink(pos_B, pos_P, getComputedStyle(document.documentElement).getPropertyValue('--accent-link'));
+            drawStyledLink(pos_C, pos_P, getComputedStyle(document.documentElement).getPropertyValue('--accent-link'));
+
+            [motor1_pos, motor2_pos, pos_B, pos_C].forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, 2*Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 2*Math.PI); ctx.fillStyle = '#495057'; ctx.fill();
+            });
+            
+            ctx.beginPath(); ctx.arc(pos_P.x, pos_P.y, 12, 0, 2 * Math.PI); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-p'); ctx.fill();
+            ctx.beginPath(); ctx.arc(pos_P.x, pos_P.y, 12, 0, 2 * Math.PI); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke();
+
+            const display_x = pos_P.x - motor1_pos.x;
+            const display_y = motor1_pos.y - pos_P.y;
+            info.innerHTML = `匯集點 (P): (${display_x.toFixed(1)}, ${display_y.toFixed(1)})`;
+            
+            if (activeSliderId && trajectories[activeSliderId]) {
+                const currentSegments = trajectories[activeSliderId];
+                if (currentSegments.length > 0) {
+                    currentSegments[currentSegments.length - 1].push(pos_P);
+                }
+            }
+        }
+
+        function update() {
+            const t1 = parseInt(sliders.theta1.value);
+            const t2 = parseInt(sliders.theta2.value);
+            const baseRatio = parseFloat(sliders.baseRatio.value);
+
+            vals.theta1.textContent = `${t1}°`;
+            vals.theta2.textContent = `${t2}°`;
+            vals.baseRatio.textContent = `${(baseRatio * 100).toFixed(0)}%`;
+
+            const baseWidth = canvas.width * baseRatio;
+            const y_offset = canvas.height * 0.9;
+            motor1_pos = { x: (canvas.width - baseWidth) / 2, y: y_offset };
+            motor2_pos = { x: motor1_pos.x + baseWidth, y: y_offset };
+            
+            drawArm(t1, t2);
+        }
+
+        function handleSliderStart(e) {
+            activeSliderId = e.target.id;
+            // **核心改動**: 不再清除舊軌跡，而是添加一個新的空軌跡段
+            if (trajectories[activeSliderId]) {
+                trajectories[activeSliderId].push([]);
+            }
+        }
+        
+        function handleSliderEnd() {
+            activeSliderId = null;
+        }
+
+        Object.values(sliders).forEach(slider => {
+            slider.addEventListener('mousedown', handleSliderStart);
+            slider.addEventListener('touchstart', handleSliderStart, {passive: true});
+            slider.addEventListener('input', update);
+        });
+        
+        document.addEventListener('mouseup', handleSliderEnd);
+        document.addEventListener('touchend', handleSliderEnd);
+
+        clearBtn.addEventListener('click', () => {
+            // 清除所有軌跡段
+            trajectories = { theta1: [], theta2: [], baseRatio: [] };
+            update();
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>
